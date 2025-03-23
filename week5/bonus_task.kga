@@ -1,0 +1,87 @@
+label kernel_entry_point
+    copy FREE_MEMORY_END to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_stack_ptr
+
+copy PROGRAM_COUNTER to var:sys_return
+jump label:sys_fs_init
+
+label counting
+    write "2.txt" to REG_A
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:sys_fs_open
+    var file_desc
+    copy REG_RES to var:file_desc
+
+    copy var:file_desc to REG_A
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:sys_fs_descriptor_info
+
+    var counter
+    write 1 to var:counter
+    label loop
+        copy var:file_desc to REG_A
+        copy var:counter to REG_B
+        copy PROGRAM_COUNTER to var:sys_return
+        jump label:sys_fs_read
+        jump_err label:close
+
+        var line
+        copy REG_RES to var:line
+
+        copy var:line to REG_A
+        write 1 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+
+        copy REG_RES to REG_A
+        write OP_IS_NUM to REG_OP
+        cpu_exec
+        var is_num
+        copy REG_RES to var:is_num
+        jump_if label:increase
+
+        copy var:counter to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:counter
+        jump label:loop
+
+    label increase
+        copy var:is_num to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:is_num
+
+        copy var:line to REG_A
+        write 1 to REG_B
+        write " " to REG_C
+        copy var:is_num to REG_D
+        write OP_REPLACE_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:line
+
+        copy var:file_desc to REG_A
+        copy var:counter to REG_B
+        copy var:line to REG_C
+        copy PROGRAM_COUNTER to var:sys_return
+        jump label:sys_fs_write
+
+        copy var:counter to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:counter
+
+        jump label:loop
+    
+    label close
+        copy var:file_desc to REG_A
+        copy PROGRAM_COUNTER to var:sys_return
+        jump label:sys_fs_close
+        jump label:exit
+
+label exit 
+    write OP_HALT to REG_OP
+    cpu_exec

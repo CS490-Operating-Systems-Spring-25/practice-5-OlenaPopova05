@@ -1,0 +1,123 @@
+label kernel_entry_point
+
+    copy FREE_MEMORY_END to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_stack_ptr
+
+
+write COLOR_CYAN to DISPLAY_BACKGROUND
+write OP_SET_BACKGROUND_COLOR to REG_OP
+cpu_exec
+
+write "ccccccccccccccccccc" to 250
+write "ccccccccccccccccccc" to 251
+write "ccccccccccccccccccc" to 252
+write "ccccccccccccccccccc" to 253
+write "cccccccBBcBBccccccc" to 254
+write "ccccccBccBccBcccccc" to 255
+write "ccccccBcccBcBcccccc" to 256
+write "cccccccBBBBBBcccccc" to 257
+write "ccccccBByByyyBccccc" to 258
+write "cccccByByByyyyBcccc" to 259
+write "ccccBByByByyByBcccc" to 260
+write "cccccByByByyyyBcccc" to 261
+write "ccccccBByByyyBccccc" to 262
+write "cccccccBBBBBBcccccc" to 263
+write "ccccccccccccccccccc" to 264
+write "ccccccccccccccccccc" to 265
+write "ccccccccccccccccccc" to 266
+write "ccccccccccccccccccc" to 267
+
+
+label loop
+    write 250 to REG_A
+    write 268 to REG_B
+    write OP_RENDER_BITMAP to REG_OP
+    cpu_exec
+
+    var counter
+    write 249 to var:counter
+
+    write KEYBOARD_READ_LINE_SILENTLY to REG_A
+    write OP_READ_INPUT to REG_OP
+    cpu_exec
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "a" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump_if label:shift_left
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "d" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump_if label:shift_right
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "q" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:exit
+
+    jump label:loop
+
+label shift_left
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+    
+    copy *var:counter to REG_A
+    write 1 to REG_B
+    write "" to REG_C
+    write "" to REG_D
+    write OP_REPLACE_COLUMN to REG_OP
+    cpu_exec
+    copy REG_RES to *var:counter
+
+    copy var:counter to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:counter
+
+    copy var:counter to REG_A
+    write 264 to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+
+    jump_if label:shift_left
+
+    jump label:sys_stack_pop
+
+label shift_right
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+    
+    write "c" to REG_A
+    copy *var:counter to REG_B
+    write "" to REG_C
+    write OP_CONCAT_WITH to REG_OP
+    cpu_exec
+    copy REG_RES to *var:counter
+
+    copy var:counter to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:counter
+
+    copy var:counter to REG_A
+    write 264 to REG_B
+    write OP_CMP_LT to REG_OP
+    cpu_exec
+
+    jump_if label:shift_right
+
+    jump label:sys_stack_pop
+    
+
+label exit
+    write OP_HALT to REG_OP
+    cpu_exec
+    
